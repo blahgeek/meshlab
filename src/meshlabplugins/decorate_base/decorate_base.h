@@ -136,6 +136,11 @@ public:
 
   inline QString TextureStyleParam() const   { return  "MeshLab::Decoration::TextureStyle" ; }
   inline QString TextureFaceColorParam() const   { return  "MeshLab::Decoration::TextureFaceColor" ; }
+  inline QString TextureMinX() const         { return  "MeshLab::Decoration::TextureMinX" ; }
+  inline QString TextureMaxX() const         { return  "MeshLab::Decoration::TextureMaxX" ; }
+  inline QString TextureMinY() const         { return  "MeshLab::Decoration::TextureMinY" ; }
+  inline QString TextureMaxY() const         { return  "MeshLab::Decoration::TextureMaxY" ; }
+
   inline QString VertDotSizeParam() const    { return  "MeshLab::Decoration::VertDotSize" ; }
 
   inline QString HistBinNumParam() const     { return  "MeshLab::Decoration::HistBinNumParam" ; }

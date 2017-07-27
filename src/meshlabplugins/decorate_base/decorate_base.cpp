@@ -956,8 +956,14 @@ void DecorateBasePlugin::DrawTexParam(MeshModel &m, GLArea *gla, QPainter *paint
 
     glLabel::render(painter,Point3f(0.0,-0.10,0.0),textureName,glLabel::Mode(textColor));
     checkGLError::debugInfo("DrawTexParam");
-    drawQuotedLine(Point3d(0,0,0),Point3d(0,1,0),0,1,0.1,painter,qf,0,true);
-    drawQuotedLine(Point3d(0,0,0),Point3d(1,0,0),0,1,0.1,painter,qf,90.0f);
+
+    float min_x = rm->getFloat(this->TextureMinX());
+    float max_x = rm->getFloat(this->TextureMaxX());
+    float min_y = rm->getFloat(this->TextureMinY());
+    float max_y = rm->getFloat(this->TextureMaxY());
+
+    drawQuotedLine(Point3d(0,0,0),Point3d(0,1,0), min_y, max_y, (max_y - min_y) / 10, painter,qf,0,true);
+    drawQuotedLine(Point3d(0,0,0),Point3d(1,0,0), min_x, max_x, (max_x - min_x) / 10, painter,qf,90.0f);
 
 
     glPushAttrib(GL_ALL_ATTRIB_BITS);
@@ -989,17 +995,34 @@ void DecorateBasePlugin::DrawTexParam(MeshModel &m, GLArea *gla, QPainter *paint
     }
 
     glBegin(GL_TRIANGLES);
-    for(size_t i=0;i<m.cm.face.size();++i)
+    for(size_t i=0;i<m.cm.face.size();++i) {
         if(!m.cm.face[i].IsD())
         {
+            bool invalid = false;
+            float uv_values_scale[3][2] = {{0}};
+            for (int k = 0 ; k < 3 ; k += 1) {
+                float u = m.cm.face[i].WT(k).P()[0];
+                float v = m.cm.face[i].WT(k).P()[1];
+                uv_values_scale[k][0] = (u - min_x) / (max_x - min_x);
+                uv_values_scale[k][1] = (v - min_y) / (max_y - min_y);
+                if (uv_values_scale[k][0] < 0 || uv_values_scale[k][0] > 1.f ||
+                    uv_values_scale[k][1] < 0 || uv_values_scale[k][1] > 1.f )
+                    invalid = true;
+            }
+
+            if (invalid)
+                continue;
+
             if(faceColor) glColor(m.cm.face[i].C());
             glTexCoord(m.cm.face[i].WT(0).P());
-            glVertex(m.cm.face[i].WT(0).P());
+            glVertex(uv_values_scale[0]);
             glTexCoord(m.cm.face[i].WT(1).P());
-            glVertex(m.cm.face[i].WT(1).P());
+            glVertex(uv_values_scale[1]);
             glTexCoord(m.cm.face[i].WT(2).P());
-            glVertex(m.cm.face[i].WT(2).P());
+            glVertex(uv_values_scale[2]);
         }
+    }
+
         glEnd();
         glDisable(GL_TEXTURE_2D);
 
@@ -1026,6 +1049,10 @@ void DecorateBasePlugin::initGlobalParameterSet(QAction *action, RichParameterSe
         assert(!parset.hasParameter(TextureStyleParam()));
         parset.addParam(new RichBool(TextureStyleParam(), true,"Texture Param Wire","if true the parametrization is drawn in a textured wireframe style"));
         parset.addParam(new RichBool(TextureFaceColorParam(), false,"Face Color","if true the parametrization is drawn with a per face color (useful if you want display per face parametrization distortion)"));
+        parset.addParam(new RichFloat(TextureMinX(), 0.0, "Min X", "Min X axis"));
+        parset.addParam(new RichFloat(TextureMaxX(), 1.0, "Max X", "Max X axis"));
+        parset.addParam(new RichFloat(TextureMinY(), 0.0, "Min Y", "Min Y axis"));
+        parset.addParam(new RichFloat(TextureMaxY(), 1.0, "Max Y", "Max Y axis"));
                             } break;
     case DP_SHOW_LABEL :
         {
